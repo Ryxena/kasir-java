@@ -4,12 +4,16 @@
  */
 package belajar;
 
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import javax.swing.table.DefaultTableModel;
-import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import java.sql.*;
 import javax.swing.JOptionPane;
 import java.time.LocalDate;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -34,12 +38,13 @@ public class CashierPanel extends javax.swing.JFrame {
 
     public CashierPanel() {
         initComponents();
-        setComboBox();
-        AutoCompleteDecorator.decorate(productlist);
+        FullScreen();
+        productlist.requestFocusInWindow();
+
     }
 
     private void search(String val) {
-        sql = "SELECT * FROM product WHERE ProductName LIKE ? LIMIT 1;";
+        sql = "SELECT * FROM product WHERE ProductID LIKE ? LIMIT 1;";
 
         try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, "%" + val + "%");
@@ -55,11 +60,60 @@ public class CashierPanel extends javax.swing.JFrame {
         }
     }
 
+    private void FullScreen() {
+        getContentPane().setPreferredSize(Toolkit.getDefaultToolkit().getScreenSize());
+        pack();
+        setResizable(false);
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                Point p = new Point(0, 0);
+                SwingUtilities.convertPointToScreen(p, getContentPane());
+                Point l = getLocation();
+                l.x -= p.x;
+                l.y -= p.y;
+                setLocation(l);
+            }
+        });
+    }
+
+//    private void newrecord() {
+//        String Name = productlist.getSelectedItem().toString();
+//        int harga = Integer.parseInt(valharga.getText());
+//        int jumlah = Integer.parseInt(valjumlah.getText());
+//        int total = jumlah * productPrice;
+//        if (!productQuantities.containsKey(Name) || jumlah > productQuantities.get(Name)) {
+//            JOptionPane.showMessageDialog(null, "Jumlah barang yang diminta melebihi stok!");
+//            return;
+//        }
+//        DefaultTableModel tavel = (DefaultTableModel) tbl.getModel();
+//
+//        tavel.addRow(new Object[]{
+//            Name,
+//            harga,
+//            jumlah,
+//            total
+//        });
+//        Integer totalHarga = 0;
+//        for (int i = 0; i < tbl.getRowCount(); i++) {
+//            totalHarga += Integer.parseInt(tbl.getValueAt(i, 3).toString());
+//        }
+//        ttlcuy.setText(totalHarga.toString());
+//    }
     private void updateProductQuantity() {
         sql = "UPDATE product SET Quantity = ? WHERE ProductName = ?";
-
         try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setInt(1,  productQuantities.get(productName));
+            int currentQuantity = productQuantities.get(productName);
+            int quantityInTable = 0;
+
+            for (int i = 0; i < tbl.getRowCount(); i++) {
+                if (tbl.getValueAt(i, 0).toString().equals(productName)) {
+                    quantityInTable = Integer.parseInt(tbl.getValueAt(i, 2).toString());
+                    break;
+                }
+            }
+
+            preparedStatement.setInt(1, currentQuantity - quantityInTable);
             preparedStatement.setString(2, productName);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -67,65 +121,57 @@ public class CashierPanel extends javax.swing.JFrame {
         }
     }
 
-    private void newrecord() {
-        String Name = productlist.getSelectedItem().toString();
-        int harga = Integer.parseInt(valharga.getText());
-        int jumlah = Integer.parseInt(valjumlah.getText());
-        int total = jumlah * productPrice;
-        if (!productQuantities.containsKey(Name) || jumlah > productQuantities.get(Name)) {
-            JOptionPane.showMessageDialog(null, "Jumlah barang yang diminta melebihi stok!");
-            return;
-        }
-        DefaultTableModel tavel = (DefaultTableModel) tbl.getModel();
+    private void addProductToTable(String productId) {
+        DefaultTableModel tableModel = (DefaultTableModel) tbl.getModel();
 
-        tavel.addRow(new Object[]{
-            Name,
-            harga,
-            jumlah,
-            total
-        });
-        Integer totalHarga = 0;
-        for (int i = 0; i < tbl.getRowCount(); i++) {
-            totalHarga += Integer.parseInt(tbl.getValueAt(i, 3).toString());
-        }
-        ttlcuy.setText(totalHarga.toString());
-//        productQuantities.put(Name, productQuantities.get(Name) - jumlah);
-//        updateProductQuantity(Name);
-    }
-//    private void updateProductQuantity(String productName) {
-//        sql = "UPDATE product SET Quantity = ? WHERE ProductName = ?";
-//
-//        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-//            preparedStatement.setInt(1, productQuantities.get(productName));
-//            preparedStatement.setString(2, productName);
-//            preparedStatement.executeUpdate();
-//        } catch (SQLException e) {
-//            JOptionPane.showMessageDialog(null, e.toString());
-//        }
-//    }
-    private void updatePrice() {
-        int row = tbl.getRowCount();
-        Integer totalHarga = 0;
-        for (int i = 0; i < tbl.getRowCount(); i++) {
-            totalHarga += Integer.parseInt(tbl.getValueAt(i, 3).toString());
-        }
-        ttlcuy.setText(totalHarga.toString());
-    }
+        sql = "SELECT * FROM product WHERE ProductID = ? LIMIT 1;";
 
-    public void setComboBox() {
-//        productlist.removeAllItems();
-        productlist.addItem("Cari disini");
-        productlist.setSelectedItem("Cari disini");
-        String[] kolom = {"Nama", "Harga", "Jumlah", "Total"};
-        DefaultTableModel tabelModel = new DefaultTableModel(null, kolom);
-        sql = "SELECT * FROM product";
-        try (Connection connection = DB.connectdb(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
-            while (resultSet.next()) {
-                productlist.addItem(resultSet.getString("ProductName"));
+        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, productId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                String productName = resultSet.getString("ProductName");
+                int price = resultSet.getInt("Price");
+                int quantity = 1;  // Default quantity untuk item yang baru ditambahkan
+
+                // Cek apakah produk sudah ada di tabel sementara
+                boolean productExists = false;
+                for (int i = 0; i < tableModel.getRowCount(); i++) {
+                    if (tableModel.getValueAt(i, 0).equals(productName)) {
+                        int currentQuantity = (int) tableModel.getValueAt(i, 2);
+                        tableModel.setValueAt(currentQuantity + 1, i, 2);  // Update quantity
+                        tableModel.setValueAt((currentQuantity + 1) * price, i, 3);  // Update total price
+                        productExists = true;
+                        break;
+                    }
+                }
+
+                // Jika produk belum ada di tabel, tambahkan sebagai baris baru
+                if (!productExists) {
+                    tableModel.addRow(new Object[]{productName, price, quantity, price * quantity});
+                }
+
+                // Update total harga
+                updatePrice();
+
+            } else {
+                JOptionPane.showMessageDialog(null, "Produk tidak ditemukan");
             }
+
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e.toString());
         }
+    }
+
+    private void updatePrice() {
+        int rowCount = tbl.getRowCount();
+        Integer totalHarga = 0;
+        for (int i = 0; i < rowCount; i++) {
+            totalHarga += Integer.parseInt(tbl.getValueAt(i, 3).toString());
+        }
+        ttlcuy.setText(totalHarga.toString());
     }
 
     /**
@@ -137,14 +183,10 @@ public class CashierPanel extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        productlist = new javax.swing.JComboBox<>();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbl = new javax.swing.JTable();
-        jLabel1 = new javax.swing.JLabel();
-        valjumlah = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         valharga = new javax.swing.JTextField();
-        addorder = new javax.swing.JButton();
         ttlcuy = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -155,17 +197,11 @@ public class CashierPanel extends javax.swing.JFrame {
         cngres = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
-        clrbtn = new javax.swing.JButton();
-        delbtn = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
+        productlist = new javax.swing.JTextField();
+        jLabel9 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        productlist.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                productlistActionPerformed(evt);
-            }
-        });
 
         tbl.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -199,16 +235,7 @@ public class CashierPanel extends javax.swing.JFrame {
             tbl.getColumnModel().getColumn(3).setHeaderValue("Total Harga");
         }
 
-        jLabel1.setText("Jumlah");
-
         jLabel2.setText("Harga");
-
-        addorder.setText("Tambah");
-        addorder.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addorderActionPerformed(evt);
-            }
-        });
 
         jLabel3.setText("Total");
 
@@ -229,26 +256,20 @@ public class CashierPanel extends javax.swing.JFrame {
 
         jLabel8.setText("Rp. ");
 
-        clrbtn.setText("clear");
-        clrbtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                clrbtnActionPerformed(evt);
-            }
-        });
-
-        delbtn.setText("Delete");
-        delbtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                delbtnActionPerformed(evt);
-            }
-        });
-
         jButton1.setText("<< Kembali");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
             }
         });
+
+        productlist.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                productlistActionPerformed(evt);
+            }
+        });
+
+        jLabel9.setText("Inpu ID barang");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -263,7 +284,8 @@ public class CashierPanel extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(productlist, javax.swing.GroupLayout.PREFERRED_SIZE, 173, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(productlist, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(49, 49, 49)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -272,19 +294,11 @@ public class CashierPanel extends javax.swing.JFrame {
                                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                         .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(byrya))
+                                        .addComponent(byrya, javax.swing.GroupLayout.DEFAULT_SIZE, 122, Short.MAX_VALUE))
                                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                         .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(ttlcuy))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(valjumlah, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGap(18, 18, 18)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(valharga, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -295,11 +309,8 @@ public class CashierPanel extends javax.swing.JFrame {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(bayarbtn)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(clrbtn)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(delbtn))
-                                    .addComponent(addorder))
+                                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(valharga, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))))
         );
         layout.setVerticalGroup(
@@ -309,23 +320,17 @@ public class CashierPanel extends javax.swing.JFrame {
                 .addComponent(jButton1)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2))
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel9))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(productlist, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(valjumlah, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(valharga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(valharga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(productlist, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(addorder)
-                        .addGap(28, 28, 28)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(clrbtn)
-                            .addComponent(delbtn))
-                        .addGap(82, 82, 82)
+                        .addGap(156, 156, 156)
                         .addComponent(jLabel3)
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -351,41 +356,58 @@ public class CashierPanel extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void productlistActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_productlistActionPerformed
-        // TODO add your handling code here:
-        search(productlist.getSelectedItem().toString());
-//    System.out.println("belajar.CashierPanel.productlistActionPerformed() " + productlist.getSelectedItem().toString());
-    }//GEN-LAST:event_productlistActionPerformed
-
-    private void addorderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addorderActionPerformed
-        // TODO add your handling code here:
-        newrecord();
-        System.out.println(productQuantities);
-    }//GEN-LAST:event_addorderActionPerformed
-
     private void bayarbtnMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_bayarbtnMouseClicked
-        // TODO add your handling code here:
         Integer TotalHarga = Integer.parseInt(ttlcuy.getText());
         Integer TotalBayar = Integer.parseInt(byrya.getText());
         Integer result = TotalBayar - TotalHarga;
         cngres.setText(result.toString());
 
         sql = "INSERT INTO orders (date, total_price) VALUES (?, ?)";
-        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
             preparedStatement.setString(1, currentDate.toString());
             preparedStatement.setInt(2, TotalHarga);
 
             int hasil = preparedStatement.executeUpdate();
-            if (hasil > 0) {
-                DefaultTableModel dm = (DefaultTableModel) tbl.getModel();
-                productPrice = 0;
-                productlist.setSelectedItem("Cari disini");
-                valjumlah.setText("");
-                ttlcuy.setText("");
-                valharga.setText("");
-                dm.setNumRows(0);
-                JOptionPane.showMessageDialog(null, "Pesanan berhasil ditambahkan");
 
+            if (hasil > 0) {
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                Integer orderId = null;
+
+                if (generatedKeys.next()) {
+                    orderId = generatedKeys.getInt(1);
+                }
+
+                if (orderId != null) {
+                    DefaultTableModel dm = (DefaultTableModel) tbl.getModel();
+
+                    // Insert each item from the table into orders_detail
+                    sql = "INSERT INTO orders_detail (order_id, product_name, quantity, price) VALUES (?, ?, ?, ?)";
+                    try (PreparedStatement detailStatement = connection.prepareStatement(sql)) {
+                        for (int i = 0; i < dm.getRowCount(); i++) {
+                            String productName = dm.getValueAt(i, 0).toString();
+                            int quantity = Integer.parseInt(dm.getValueAt(i, 2).toString());
+                            int price = Integer.parseInt(dm.getValueAt(i, 3).toString());
+
+                            detailStatement.setInt(1, orderId);
+                            detailStatement.setString(2, productName);
+                            detailStatement.setInt(3, quantity);
+                            detailStatement.setInt(4, price);
+
+                            detailStatement.executeUpdate();
+                        }
+                    }
+
+                    // Reset the UI elements
+                    productPrice = 0;
+                    ttlcuy.setText("");
+                    valharga.setText("");
+                    dm.setNumRows(0);
+
+                    JOptionPane.showMessageDialog(null, "Pesanan berhasil ditambahkan");
+                } else {
+                    JOptionPane.showMessageDialog(null, "Gagal mendapatkan Order ID");
+                }
             } else {
                 JOptionPane.showMessageDialog(null, "Gagal menambahkan pesanan ke Database");
             }
@@ -394,19 +416,6 @@ public class CashierPanel extends javax.swing.JFrame {
         }
 
     }//GEN-LAST:event_bayarbtnMouseClicked
-
-    private void clrbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clrbtnActionPerformed
-        // TODO add your handling code here:
-        DefaultTableModel dm = (DefaultTableModel) tbl.getModel();
-        productPrice = 0;
-        productlist.setSelectedItem("Cari disini");
-        valjumlah.setText("");
-        ttlcuy.setText("");
-        valharga.setText("");
-        dm.setNumRows(0);
-
-
-    }//GEN-LAST:event_clrbtnActionPerformed
 
     private void tblMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMouseClicked
         // TODO add your handling code here:
@@ -420,9 +429,12 @@ public class CashierPanel extends javax.swing.JFrame {
         LoginPage.main(null);
     }//GEN-LAST:event_jButton1ActionPerformed
 
-    private void delbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_delbtnActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_delbtnActionPerformed
+    private void productlistActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_productlistActionPerformed
+            String productId = productlist.getText();
+            addProductToTable(productId);
+            productlist.setText("");  
+            productlist.requestFocusInWindow(); 
+    }//GEN-LAST:event_productlistActionPerformed
 
     /**
      * @param args the command line arguments
@@ -460,14 +472,10 @@ public class CashierPanel extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton addorder;
     private javax.swing.JButton bayarbtn;
     private javax.swing.JTextField byrya;
-    private javax.swing.JButton clrbtn;
     private javax.swing.JTextField cngres;
-    private javax.swing.JButton delbtn;
     private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -475,11 +483,11 @@ public class CashierPanel extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JComboBox<String> productlist;
+    private javax.swing.JTextField productlist;
     private javax.swing.JTable tbl;
     private javax.swing.JTextField ttlcuy;
     private javax.swing.JTextField valharga;
-    private javax.swing.JTextField valjumlah;
     // End of variables declaration//GEN-END:variables
 }
