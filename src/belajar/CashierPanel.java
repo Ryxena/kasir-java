@@ -21,10 +21,11 @@ import javax.swing.SwingUtilities;
  * @author ASUS
  */
 public class CashierPanel extends javax.swing.JFrame {
-
+    
     /**
      * Creates new form CashierPanel
      */
+    // kode barang xx-
     Integer IDBarang = null;
     String IDEmployee = null;
     String sql;
@@ -76,30 +77,6 @@ public class CashierPanel extends javax.swing.JFrame {
             }
         });
     }
-
-//    private void newrecord() {
-//        String Name = productlist.getSelectedItem().toString();
-//        int harga = Integer.parseInt(valharga.getText());
-//        int jumlah = Integer.parseInt(valjumlah.getText());
-//        int total = jumlah * productPrice;
-//        if (!productQuantities.containsKey(Name) || jumlah > productQuantities.get(Name)) {
-//            JOptionPane.showMessageDialog(null, "Jumlah barang yang diminta melebihi stok!");
-//            return;
-//        }
-//        DefaultTableModel tavel = (DefaultTableModel) tbl.getModel();
-//
-//        tavel.addRow(new Object[]{
-//            Name,
-//            harga,
-//            jumlah,
-//            total
-//        });
-//        Integer totalHarga = 0;
-//        for (int i = 0; i < tbl.getRowCount(); i++) {
-//            totalHarga += Integer.parseInt(tbl.getValueAt(i, 3).toString());
-//        }
-//        ttlcuy.setText(totalHarga.toString());
-//    }
     private void updateProductQuantity() {
         sql = "UPDATE product SET Quantity = ? WHERE ProductName = ?";
         try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -112,7 +89,6 @@ public class CashierPanel extends javax.swing.JFrame {
                     break;
                 }
             }
-
             preparedStatement.setInt(1, currentQuantity - quantityInTable);
             preparedStatement.setString(2, productName);
             preparedStatement.executeUpdate();
@@ -122,48 +98,57 @@ public class CashierPanel extends javax.swing.JFrame {
     }
 
     private void addProductToTable(String productId) {
-        DefaultTableModel tableModel = (DefaultTableModel) tbl.getModel();
+    DefaultTableModel tableModel = (DefaultTableModel) tbl.getModel();
 
-        sql = "SELECT * FROM product WHERE ProductID = ? LIMIT 1;";
+    sql = "SELECT * FROM product WHERE ProductID = ? LIMIT 1;";
 
-        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+    try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-            preparedStatement.setString(1, productId);
-            ResultSet resultSet = preparedStatement.executeQuery();
+        preparedStatement.setString(1, productId);
+        ResultSet resultSet = preparedStatement.executeQuery();
 
-            if (resultSet.next()) {
-                String productName = resultSet.getString("ProductName");
-                int price = resultSet.getInt("Price");
-                int quantity = 1;  // Default quantity untuk item yang baru ditambahkan
+        if (resultSet.next()) {
+            String productName = resultSet.getString("ProductName");
+            int price = resultSet.getInt("Price");
+            int availableQuantity = resultSet.getInt("Quantity");  // Kuantitas yang tersedia di database
 
-                // Cek apakah produk sudah ada di tabel sementara
-                boolean productExists = false;
-                for (int i = 0; i < tableModel.getRowCount(); i++) {
-                    if (tableModel.getValueAt(i, 0).equals(productName)) {
-                        int currentQuantity = (int) tableModel.getValueAt(i, 2);
-                        tableModel.setValueAt(currentQuantity + 1, i, 2);  // Update quantity
-                        tableModel.setValueAt((currentQuantity + 1) * price, i, 3);  // Update total price
-                        productExists = true;
-                        break;
+            int quantityInTable = 0;
+            // Cek apakah produk sudah ada di tabel sementara
+            boolean productExists = false;
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                if (tableModel.getValueAt(i, 0).equals(productName)) {
+                    quantityInTable = (int) tableModel.getValueAt(i, 2);
+                    if (quantityInTable + 1 > availableQuantity) {
+                        JOptionPane.showMessageDialog(null, "Kuantitas melebihi stok yang tersedia");
+                        return;  // Jika kuantitas melebihi stok, hentikan proses
                     }
+                    tableModel.setValueAt(quantityInTable + 1, i, 2);  // Update quantity
+                    tableModel.setValueAt((quantityInTable + 1) * price, i, 3);  // Update total price
+                    productExists = true;
+                    break;
                 }
-
-                // Jika produk belum ada di tabel, tambahkan sebagai baris baru
-                if (!productExists) {
-                    tableModel.addRow(new Object[]{productName, price, quantity, price * quantity});
-                }
-
-                // Update total harga
-                updatePrice();
-
-            } else {
-                JOptionPane.showMessageDialog(null, "Produk tidak ditemukan");
             }
 
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
+            // Jika produk belum ada di tabel, tambahkan sebagai baris baru
+            if (!productExists) {
+                if (availableQuantity < 1) {
+                    JOptionPane.showMessageDialog(null, "Stok produk habis");
+                    return;  // Jika stok kurang, hentikan proses
+                }
+                tableModel.addRow(new Object[]{productName, price, 1, price});
+            }
+
+            // Update total harga
+            updatePrice();
+
+        } else {
+            JOptionPane.showMessageDialog(null, "Produk tidak ditemukan");
         }
+
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(null, e.toString());
     }
+}
 
     private void updatePrice() {
         int rowCount = tbl.getRowCount();

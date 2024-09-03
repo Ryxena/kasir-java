@@ -24,143 +24,142 @@ public class Barang extends javax.swing.JFrame {
     Integer ID = null;
     String sql;
     HashMap<String, Integer> categoryMap = new HashMap<String, Integer>();
-    private static DefaultTableModel tabelModel;
-
+//    private static DefaultTableModel tabelModel;
     public Barang() {
         initComponents();
         setComboBox();
         showData(null);
     }
 
-    private void delete() {
-        if (ID != -1) {
-            String query = "DELETE FROM product WHERE ProductID = ?";
-            try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-                preparedStatement.setInt(1, ID);
-                int hasil = preparedStatement.executeUpdate();
+        private void delete() {
+            if (ID != -1) {
+                String query = "DELETE FROM product WHERE ProductID = ?";
+                try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setInt(1, ID);
+                    int hasil = preparedStatement.executeUpdate();
 
-                if (hasil > 0) {
-                    JOptionPane.showMessageDialog(null, "Baris dengan ID " + ID + " berhasil dihapus dari Database");
-                } else {
-                    JOptionPane.showMessageDialog(null, "Baris dengan ID " + ID + " tidak ditemukan dalam Database");
+                    if (hasil > 0) {
+                        JOptionPane.showMessageDialog(null, "Baris dengan ID " + ID + " berhasil dihapus dari Database");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Baris dengan ID " + ID + " tidak ditemukan dalam Database");
+                    }
+                    ID = -1;
+                } catch (SQLException e) {
+                    JOptionPane.showMessageDialog(null, e.toString());
                 }
-                ID = -1;
+            } else {
+                JOptionPane.showMessageDialog(null, "Tidak ada baris yang dipilih untuk dihapus.");
+            }
+        }
+
+
+        private void update() {
+            String productName = ItemName.getText();
+            int quantity = Integer.parseInt(ItemQuantity.getText());
+            double price = Double.parseDouble(ItemPrice.getText());
+            int categoryID = categoryMap.get(ItemCategory.getSelectedItem().toString());
+
+            sql = "UPDATE product SET ProductName = ?, Quantity = ?, Price = ?, CategoryID = ? WHERE ProductID = ?";
+
+            try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, productName);
+                preparedStatement.setInt(2, quantity);
+                preparedStatement.setDouble(3, price);
+                preparedStatement.setInt(4, categoryID);
+                preparedStatement.setInt(5, ID);
+
+                int rowsUpdated = preparedStatement.executeUpdate();
+                if (rowsUpdated > 0) {
+                    JOptionPane.showMessageDialog(null, "Data item berhasil ditambahkan");
+                }else {
+                    JOptionPane.showMessageDialog(null, "Gagal memperbarui item dengan ID " + ID + " di Database");
+                }
             } catch (SQLException e) {
                 JOptionPane.showMessageDialog(null, e.toString());
             }
-        } else {
-            JOptionPane.showMessageDialog(null, "Tidak ada baris yang dipilih untuk dihapus.");
-        }
-    }
-
-
-    private void update() {
-        String productName = ItemName.getText();
-        int quantity = Integer.parseInt(ItemQuantity.getText());
-        double price = Double.parseDouble(ItemPrice.getText());
-        int categoryID = categoryMap.get(ItemCategory.getSelectedItem().toString());
-
-        sql = "UPDATE product SET ProductName = ?, Quantity = ?, Price = ?, CategoryID = ? WHERE ProductID = ?";
-
-        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, productName);
-            preparedStatement.setInt(2, quantity);
-            preparedStatement.setDouble(3, price);
-            preparedStatement.setInt(4, categoryID);
-            preparedStatement.setInt(5, ID);
-            
-            int rowsUpdated = preparedStatement.executeUpdate();
-            if (rowsUpdated > 0) {
-                JOptionPane.showMessageDialog(null, "Data item berhasil ditambahkan");
-            }else {
-                JOptionPane.showMessageDialog(null, "Gagal memperbarui item dengan ID " + ID + " di Database");
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-        }
-    }
-
-    private void setComboBox() {
-        sql = "SELECT * FROM category";
-        ItemCategory.addItem("Category");
-        ItemCategory.setSelectedItem("Category");
-        try (Connection connection = DB.connectdb(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
-            while (resultSet.next()) {
-                int categoryID = resultSet.getInt("CategoryID");
-                String categoryName = resultSet.getString("CategoryName");
-                ItemCategory.addItem(resultSet.getString("CategoryName"));
-                categoryMap.put(categoryName, categoryID);
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-        }
-    }
-
-    private void showData(String cari) {
-        sql = "SELECT p.ProductID, p.ProductName, p.Quantity, p.Price, c.CategoryName "
-                + "FROM product p "
-                + "INNER JOIN category c ON p.CategoryID = c.CategoryID ";
-        
-        if (cari != null && !cari.isEmpty()) {
-            sql += "WHERE p.ProductName LIKE ? OR p.Quantity LIKE ? OR p.Price LIKE ? OR c.CategoryName LIKE ?";
         }
 
-        String[] kolom = {"ID", "Nama", "Stock", "Harga", "Category"};
-        DefaultTableModel tabelModel = new DefaultTableModel(null, kolom);
-
-        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            if (cari != null && !cari.isEmpty()) {
-                String cariString = "%" + cari + "%";
-                for (int i = 1; i <= 4; i++) {
-                    preparedStatement.setString(i, cariString);
-                }
-            }
-
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    String id = resultSet.getString("ProductID");
-                    String nama = resultSet.getString("ProductName");
-                    String quantity = resultSet.getString("Quantity");
-                    String price = resultSet.getString("Price");
-                    String category = resultSet.getString("CategoryName");
-                    Object[] baris = {id, nama, quantity, price, category};
-                    tabelModel.addRow(baris);
-                }
-            }
-
-            itemtabel.setModel(tabelModel);
-
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-        }
-    }
-
-    private void tambah() {
-        String nama = ItemName.getText();
-        Integer quantity = Integer.parseInt(ItemQuantity.getText());
-        Integer price = Integer.parseInt(ItemPrice.getText());
-        Integer categoryid = categoryMap.get(ItemCategory.getSelectedItem().toString());
-        sql = "INSERT INTO product (ProductName, Quantity, Price, CategoryID) VALUES (?, ?, ?, ?)";
-        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, nama);
-            preparedStatement.setInt(2, quantity);
-            preparedStatement.setDouble(3, price);
-            preparedStatement.setInt(4, categoryid);
-
-            int hasil = preparedStatement.executeUpdate();
-            if (hasil > 0) {
-                JOptionPane.showMessageDialog(null, "Item Berhasil ditambahkan");
-            } else {
-                JOptionPane.showMessageDialog(null, "Gagal menambahkan item ke Database");
-            }
-            ItemName.setText("");
-            ItemQuantity.setText("");
-            ItemPrice.setText("");
+        private void setComboBox() {
+            sql = "SELECT * FROM category";
+            ItemCategory.addItem("Category");
             ItemCategory.setSelectedItem("Category");
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
+            try (Connection connection = DB.connectdb(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
+                while (resultSet.next()) {
+                    int categoryID = resultSet.getInt("CategoryID");
+                    String categoryName = resultSet.getString("CategoryName");
+                    ItemCategory.addItem(resultSet.getString("CategoryName"));
+                    categoryMap.put(categoryName, categoryID);
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, e.toString());
+            }
         }
-    }
+
+        private void showData(String cari) {
+            sql = "SELECT p.ProductID, p.ProductName, p.Quantity, p.Price, c.CategoryName "
+                    + "FROM product p "
+                    + "INNER JOIN category c ON p.CategoryID = c.CategoryID ";
+
+            if (cari != null && !cari.isEmpty()) {
+                sql += "WHERE p.ProductName LIKE ? OR p.Quantity LIKE ? OR p.Price LIKE ? OR c.CategoryName LIKE ?";
+            }
+
+            String[] kolom = {"ID", "Nama", "Stock", "Harga", "Category"};
+            DefaultTableModel tabelModel = new DefaultTableModel(null, kolom);
+
+            try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                if (cari != null && !cari.isEmpty()) {
+                    String cariString = "%" + cari + "%";
+                    for (int i = 1; i <= 4; i++) {
+                        preparedStatement.setString(i, cariString);
+                    }
+                }
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String id = resultSet.getString("ProductID");
+                        String nama = resultSet.getString("ProductName");
+                        String quantity = resultSet.getString("Quantity");
+                        String price = resultSet.getString("Price");
+                        String category = resultSet.getString("CategoryName");
+                        Object[] baris = {id, nama, quantity, price, category};
+                        tabelModel.addRow(baris);
+                    }
+                }
+
+                itemtabel.setModel(tabelModel);
+
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, e.toString());
+            }
+        }
+
+        private void tambah() {
+            String nama = ItemName.getText();
+            Integer quantity = Integer.parseInt(ItemQuantity.getText());
+            Integer price = Integer.parseInt(ItemPrice.getText());
+            Integer categoryid = categoryMap.get(ItemCategory.getSelectedItem().toString());
+            sql = "INSERT INTO product (ProductName, Quantity, Price, CategoryID) VALUES (?, ?, ?, ?)";
+            try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, nama);
+                preparedStatement.setInt(2, quantity);
+                preparedStatement.setDouble(3, price);
+                preparedStatement.setInt(4, categoryid);
+
+                int hasil = preparedStatement.executeUpdate();
+                if (hasil > 0) {
+                    JOptionPane.showMessageDialog(null, "Item Berhasil ditambahkan");
+                } else {
+                    JOptionPane.showMessageDialog(null, "Gagal menambahkan item ke Database");
+                }
+                ItemName.setText("");
+                ItemQuantity.setText("");
+                ItemPrice.setText("");
+                ItemCategory.setSelectedItem("Category");
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, e.toString());
+            }
+        }
 
     /**
      * This method is called from within the constructor to initialize the form.
