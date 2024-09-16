@@ -112,6 +112,11 @@ public class Riwayat extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        history.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                historyMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(history);
 
         dettime.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -190,13 +195,13 @@ public class Riwayat extends javax.swing.JFrame {
         // TODO add your handling code here:
         showOrders(null, dettime.getDate());
         System.out.println(dettime.getDate());
-        
+
     }//GEN-LAST:event_dettimeMouseClicked
 
     private void formcariActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_formcariActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_formcariActionPerformed
- 
+
     private void searchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchActionPerformed
         // TODO add your handling code here:
         showOrders(formcari.getText(), dettime.getDate());
@@ -207,6 +212,17 @@ public class Riwayat extends javax.swing.JFrame {
         dispose();
         AdminPanel.main(null);
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void historyMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_historyMouseClicked
+        // TODO add your handling code here:
+        int baris = history.getSelectedRow();
+        id = Integer.parseInt(history.getModel().getValueAt(baris, 0).toString());
+        TransaksiPanel transaksipanel = new TransaksiPanel();
+        transaksipanel.setId(id);
+        transaksipanel.setTabel(id); 
+        transaksipanel.setVisible(true);
+        
+    }//GEN-LAST:event_historyMouseClicked
 
     /**
      * @param args the command line arguments

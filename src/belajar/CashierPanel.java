@@ -21,7 +21,7 @@ import javax.swing.SwingUtilities;
  * @author ASUS
  */
 public class CashierPanel extends javax.swing.JFrame {
-    
+
     /**
      * Creates new form CashierPanel
      */
@@ -44,23 +44,6 @@ public class CashierPanel extends javax.swing.JFrame {
 
     }
 
-    private void search(String val) {
-        sql = "SELECT * FROM product WHERE ProductID LIKE ? LIMIT 1;";
-
-        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, "%" + val + "%");
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                valharga.setText(resultSet.getString("Price"));
-                productName = resultSet.getString("ProductName");
-                productPrice = resultSet.getInt("Price");
-                productQuantities.put(productName, resultSet.getInt("Quantity"));
-            }
-        } catch (Exception e) {
-
-        }
-    }
-
     private void FullScreen() {
         getContentPane().setPreferredSize(Toolkit.getDefaultToolkit().getScreenSize());
         pack();
@@ -77,7 +60,8 @@ public class CashierPanel extends javax.swing.JFrame {
             }
         });
     }
-    private void updateProductQuantity() {
+
+    private void updateProductQuantity(String productName) {
         sql = "UPDATE product SET Quantity = ? WHERE ProductName = ?";
         try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             int currentQuantity = productQuantities.get(productName);
@@ -89,66 +73,71 @@ public class CashierPanel extends javax.swing.JFrame {
                     break;
                 }
             }
+
+            // Update quantity in the database
             preparedStatement.setInt(1, currentQuantity - quantityInTable);
             preparedStatement.setString(2, productName);
             preparedStatement.executeUpdate();
+
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e.toString());
         }
     }
 
     private void addProductToTable(String productId) {
-    DefaultTableModel tableModel = (DefaultTableModel) tbl.getModel();
+        DefaultTableModel tableModel = (DefaultTableModel) tbl.getModel();
 
-    sql = "SELECT * FROM product WHERE ProductID = ? LIMIT 1;";
+        sql = "SELECT * FROM product WHERE ProductID = ? LIMIT 1;";
 
-    try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-        preparedStatement.setString(1, productId);
-        ResultSet resultSet = preparedStatement.executeQuery();
+            preparedStatement.setString(1, productId);
+            ResultSet resultSet = preparedStatement.executeQuery();
 
-        if (resultSet.next()) {
-            String productName = resultSet.getString("ProductName");
-            int price = resultSet.getInt("Price");
-            int availableQuantity = resultSet.getInt("Quantity");  // Kuantitas yang tersedia di database
+            if (resultSet.next()) {
+                String productName = resultSet.getString("ProductName");
+                int price = resultSet.getInt("Price");
+                int availableQuantity = resultSet.getInt("Quantity");  // Kuantitas yang tersedia di database
+                productQuantities.put(productName, resultSet.getInt("Quantity"));
 
-            int quantityInTable = 0;
-            // Cek apakah produk sudah ada di tabel sementara
-            boolean productExists = false;
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                if (tableModel.getValueAt(i, 0).equals(productName)) {
-                    quantityInTable = (int) tableModel.getValueAt(i, 2);
-                    if (quantityInTable + 1 > availableQuantity) {
-                        JOptionPane.showMessageDialog(null, "Kuantitas melebihi stok yang tersedia");
-                        return;  // Jika kuantitas melebihi stok, hentikan proses
+                int quantityInTable = 0;
+                // Cek apakah produk sudah ada di tabel sementara
+                boolean productExists = false;
+                for (int i = 0; i < tableModel.getRowCount(); i++) {
+                    if (tableModel.getValueAt(i, 0).equals(productName)) {
+                        quantityInTable = (int) tableModel.getValueAt(i, 2);
+                        if (quantityInTable + 1 > availableQuantity) {
+                            JOptionPane.showMessageDialog(null, "Kuantitas melebihi stok yang tersedia");
+                            return;  // Jika kuantitas melebihi stok, hentikan proses
+                        }
+                        tableModel.setValueAt(quantityInTable + 1, i, 2);  // Update quantity
+                        tableModel.setValueAt((quantityInTable + 1) * price, i, 3);  // Update total price
+                        productExists = true;
+                        System.out.println("belajar.CashierPanel.addProductToTable() " + productExists);
+                        break;
                     }
-                    tableModel.setValueAt(quantityInTable + 1, i, 2);  // Update quantity
-                    tableModel.setValueAt((quantityInTable + 1) * price, i, 3);  // Update total price
-                    productExists = true;
-                    break;
                 }
+
+                // Jika produk belum ada di tabel, tambahkan sebagai baris baru
+                if (!productExists) {
+                    if (availableQuantity < 1) {
+                        JOptionPane.showMessageDialog(null, "Stok produk habis");
+                        return;  // Jika stok kurang, hentikan proses
+                    }
+                    tableModel.addRow(new Object[]{productName, price, 1, price});
+                }
+
+                // Update total harga
+                updatePrice();
+
+            } else {
+                JOptionPane.showMessageDialog(null, "Produk tidak ditemukan");
             }
 
-            // Jika produk belum ada di tabel, tambahkan sebagai baris baru
-            if (!productExists) {
-                if (availableQuantity < 1) {
-                    JOptionPane.showMessageDialog(null, "Stok produk habis");
-                    return;  // Jika stok kurang, hentikan proses
-                }
-                tableModel.addRow(new Object[]{productName, price, 1, price});
-            }
-
-            // Update total harga
-            updatePrice();
-
-        } else {
-            JOptionPane.showMessageDialog(null, "Produk tidak ditemukan");
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
         }
-
-    } catch (SQLException e) {
-        JOptionPane.showMessageDialog(null, e.toString());
     }
-}
 
     private void updatePrice() {
         int rowCount = tbl.getRowCount();
@@ -170,8 +159,6 @@ public class CashierPanel extends javax.swing.JFrame {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         tbl = new javax.swing.JTable();
-        jLabel2 = new javax.swing.JLabel();
-        valharga = new javax.swing.JTextField();
         ttlcuy = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -220,8 +207,6 @@ public class CashierPanel extends javax.swing.JFrame {
             tbl.getColumnModel().getColumn(3).setHeaderValue("Total Harga");
         }
 
-        jLabel2.setText("Harga");
-
         jLabel3.setText("Total");
 
         jLabel4.setText("Rp. ");
@@ -234,6 +219,11 @@ public class CashierPanel extends javax.swing.JFrame {
         bayarbtn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 bayarbtnMouseClicked(evt);
+            }
+        });
+        bayarbtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bayarbtnActionPerformed(evt);
             }
         });
 
@@ -293,10 +283,8 @@ public class CashierPanel extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(bayarbtn)
-                                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(valharga, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))))
+                                    .addComponent(bayarbtn))
+                                .addContainerGap(215, Short.MAX_VALUE))))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -304,13 +292,9 @@ public class CashierPanel extends javax.swing.JFrame {
                 .addGap(25, 25, 25)
                 .addComponent(jButton1)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel9))
+                .addComponent(jLabel9)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(valharga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(productlist, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(productlist, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -349,7 +333,6 @@ public class CashierPanel extends javax.swing.JFrame {
 
         sql = "INSERT INTO orders (date, total_price) VALUES (?, ?)";
         try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
             preparedStatement.setString(1, currentDate.toString());
             preparedStatement.setInt(2, TotalHarga);
 
@@ -380,13 +363,13 @@ public class CashierPanel extends javax.swing.JFrame {
                             detailStatement.setInt(4, price);
 
                             detailStatement.executeUpdate();
+                            updateProductQuantity(productName);
+
                         }
                     }
 
-                    // Reset the UI elements
                     productPrice = 0;
                     ttlcuy.setText("");
-                    valharga.setText("");
                     dm.setNumRows(0);
 
                     JOptionPane.showMessageDialog(null, "Pesanan berhasil ditambahkan");
@@ -405,7 +388,6 @@ public class CashierPanel extends javax.swing.JFrame {
     private void tblMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMouseClicked
         // TODO add your handling code here:
         row = tbl.getSelectedRow();
-        valharga.setText(productPrice.toString());
     }//GEN-LAST:event_tblMouseClicked
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -415,11 +397,15 @@ public class CashierPanel extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void productlistActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_productlistActionPerformed
-            String productId = productlist.getText();
-            addProductToTable(productId);
-            productlist.setText("");  
-            productlist.requestFocusInWindow(); 
+        String productId = productlist.getText();
+        addProductToTable(productId);
+        productlist.setText("");
+        productlist.requestFocusInWindow();
     }//GEN-LAST:event_productlistActionPerformed
+
+    private void bayarbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bayarbtnActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_bayarbtnActionPerformed
 
     /**
      * @param args the command line arguments
@@ -461,7 +447,6 @@ public class CashierPanel extends javax.swing.JFrame {
     private javax.swing.JTextField byrya;
     private javax.swing.JTextField cngres;
     private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -473,6 +458,5 @@ public class CashierPanel extends javax.swing.JFrame {
     private javax.swing.JTextField productlist;
     private javax.swing.JTable tbl;
     private javax.swing.JTextField ttlcuy;
-    private javax.swing.JTextField valharga;
     // End of variables declaration//GEN-END:variables
 }

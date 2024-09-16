@@ -4,8 +4,11 @@
  */
 package belajar;
 
+import java.awt.Point;
+import java.awt.Toolkit;
 import javax.swing.JOptionPane;
 import java.sql.*;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -19,7 +22,25 @@ public class Supplier extends javax.swing.JFrame {
 
     public Supplier() {
         initComponents();
+        FullScreen();
         showData(null);
+    }
+
+    private void FullScreen() {
+        getContentPane().setPreferredSize(Toolkit.getDefaultToolkit().getScreenSize());
+        pack();
+        setResizable(false);
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                Point p = new Point(0, 0);
+                SwingUtilities.convertPointToScreen(p, getContentPane());
+                Point l = getLocation();
+                l.x -= p.x;
+                l.y -= p.y;
+                setLocation(l);
+            }
+        });
     }
 
     private void showData(String cari) {
@@ -34,7 +55,7 @@ public class Supplier extends javax.swing.JFrame {
         try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             if (cari != null && !cari.isEmpty()) {
                 String cariString = "%" + cari + "%";
-                for (int i = 1; i <= 8; i++) {
+                for (int i = 1; i <= 12; i++) {
                     preparedStatement.setString(i, cariString);
                 }
             }
@@ -66,16 +87,118 @@ public class Supplier extends javax.swing.JFrame {
         }
     }
 
-    private void delete() {
-        
+    private void deleteSupplier() {
+        String kodeSupplier = kodesup.getText();
+        if (!kodeSupplier.isEmpty()) {
+            String query = "DELETE FROM supplier WHERE kode_supplier = ?";
+            try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, kodeSupplier);
+                int hasil = preparedStatement.executeUpdate();
+
+                if (hasil > 0) {
+                    JOptionPane.showMessageDialog(null, "Supplier dengan kode " + kodeSupplier + " berhasil dihapus dari Database");
+                } else {
+                    JOptionPane.showMessageDialog(null, "Supplier dengan kode " + kodeSupplier + " tidak ditemukan dalam Database");
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, e.toString());
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "Kode Supplier belum diisi.");
+        }
     }
 
-    private void update() {
-        
+    private void updateSupplier() {
+        String kodeSupplier = kodesup.getText();
+        String namaSupplier = namasup.getText();
+        String alamat = alamatsup.getText();
+        String kota = kotasup.getText();
+        String negara = negarasup.getText();
+        String telepon = telsup.getText();
+        String email = emailsup.getText();
+        String noRekening = noreksup.getText();
+        String npwp = npwpsup.getText();
+        String propinsi = provinsisup.getText();
+        String kodepos = kodepossup.getText();
+        String faximile = faxsup.getText();
+
+        sql = "UPDATE supplier SET nama_supplier = ?, alamat = ?, kota = ?, negara = ?, telepon = ?, email = ?, no_rekening = ?, npwp = ?, propinsi = ?, kodepos = ?, faximile = ? WHERE kode_supplier = ?";
+
+        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, namaSupplier);
+            preparedStatement.setString(2, alamat);
+            preparedStatement.setString(3, kota);
+            preparedStatement.setString(4, negara);
+            preparedStatement.setString(5, telepon);
+            preparedStatement.setString(6, email);
+            preparedStatement.setString(7, noRekening);
+            preparedStatement.setString(8, npwp);
+            preparedStatement.setString(9, propinsi);
+            preparedStatement.setString(10, kodepos);
+            preparedStatement.setString(11, faximile);
+            preparedStatement.setString(12, kodeSupplier);
+
+            int rowsUpdated = preparedStatement.executeUpdate();
+            if (rowsUpdated > 0) {
+                JOptionPane.showMessageDialog(null, "Data supplier berhasil diperbarui");
+            } else {
+                JOptionPane.showMessageDialog(null, "Gagal memperbarui supplier dengan kode " + kodeSupplier);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
     }
 
-    private void create() {
-        
+    private void addSupplier() {
+        String kodeSupplier = kodesup.getText();
+        String namaSupplier = namasup.getText();
+        String alamat = alamatsup.getText();
+        String kota = kotasup.getText();
+        String negara = negarasup.getText();
+        String telepon = telsup.getText();
+        String email = emailsup.getText();
+        String noRekening = noreksup.getText();
+        String npwp = npwpsup.getText();
+        String propinsi = provinsisup.getText();
+        String kodepos = kodepossup.getText();
+        String faximile = faxsup.getText();
+
+        sql = "INSERT INTO supplier (kode_supplier, nama_supplier, alamat, kota, negara, telepon, email, no_rekening, npwp, propinsi, kodepos, faximile) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, kodeSupplier);
+            preparedStatement.setString(2, namaSupplier);
+            preparedStatement.setString(3, alamat);
+            preparedStatement.setString(4, kota);
+            preparedStatement.setString(5, negara);
+            preparedStatement.setString(6, telepon);
+            preparedStatement.setString(7, email);
+            preparedStatement.setString(8, noRekening);
+            preparedStatement.setString(9, npwp);
+            preparedStatement.setString(10, propinsi);
+            preparedStatement.setString(11, kodepos);
+            preparedStatement.setString(12, faximile);
+
+            int hasil = preparedStatement.executeUpdate();
+            if (hasil > 0) {
+                JOptionPane.showMessageDialog(null, "Supplier berhasil ditambahkan");
+            } else {
+                JOptionPane.showMessageDialog(null, "Gagal menambahkan supplier ke Database");
+            }
+            // Reset form fields
+            kodesup.setText("");
+            namasup.setText("");
+            alamatsup.setText("");
+            kotasup.setText("");
+            negarasup.setText("");
+            emailsup.setText("");
+            noreksup.setText("");
+            npwpsup.setText("");
+            provinsisup.setText("");
+            kodepossup.setText("");
+            faxsup.setText("");
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
     }
 
     /**
@@ -97,14 +220,6 @@ public class Supplier extends javax.swing.JFrame {
         namasup = new javax.swing.JTextPane();
         jScrollPane3 = new javax.swing.JScrollPane();
         alamatsup = new javax.swing.JTextPane();
-        jScrollPane4 = new javax.swing.JScrollPane();
-        kotasup = new javax.swing.JTextPane();
-        jScrollPane5 = new javax.swing.JScrollPane();
-        negarasup = new javax.swing.JTextPane();
-        jScrollPane6 = new javax.swing.JScrollPane();
-        emailsup = new javax.swing.JTextPane();
-        jScrollPane7 = new javax.swing.JScrollPane();
-        nosup = new javax.swing.JTextPane();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -119,16 +234,15 @@ public class Supplier extends javax.swing.JFrame {
         jLabel12 = new javax.swing.JLabel();
         jScrollPane11 = new javax.swing.JScrollPane();
         itemtabel = new javax.swing.JTable();
-        jScrollPane12 = new javax.swing.JScrollPane();
-        noreksup = new javax.swing.JTextPane();
-        jScrollPane13 = new javax.swing.JScrollPane();
-        npwpsup = new javax.swing.JTextPane();
-        jScrollPane14 = new javax.swing.JScrollPane();
-        faxsup = new javax.swing.JTextPane();
-        jScrollPane15 = new javax.swing.JScrollPane();
-        provinsisup = new javax.swing.JTextPane();
-        jScrollPane16 = new javax.swing.JScrollPane();
-        kodepossup = new javax.swing.JTextPane();
+        kotasup = new javax.swing.JTextField();
+        negarasup = new javax.swing.JTextField();
+        telsup = new javax.swing.JTextField();
+        emailsup = new javax.swing.JTextField();
+        noreksup = new javax.swing.JTextField();
+        npwpsup = new javax.swing.JTextField();
+        faxsup = new javax.swing.JTextField();
+        provinsisup = new javax.swing.JTextField();
+        kodepossup = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -145,14 +259,6 @@ public class Supplier extends javax.swing.JFrame {
         jScrollPane2.setViewportView(namasup);
 
         jScrollPane3.setViewportView(alamatsup);
-
-        jScrollPane4.setViewportView(kotasup);
-
-        jScrollPane5.setViewportView(negarasup);
-
-        jScrollPane6.setViewportView(emailsup);
-
-        jScrollPane7.setViewportView(nosup);
 
         jLabel1.setText("Kode Supplier");
 
@@ -180,26 +286,13 @@ public class Supplier extends javax.swing.JFrame {
 
         itemtabel.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Kode", "Nama", "Alamat", "Kota", "Negara", "Telepon", "Email" , "Norek", "NPWP", "Province", "Kode POS", "FAX"
+
             }
         ));
         jScrollPane11.setViewportView(itemtabel);
-
-        jScrollPane12.setViewportView(noreksup);
-
-        jScrollPane13.setViewportView(npwpsup);
-
-        jScrollPane14.setViewportView(faxsup);
-
-        jScrollPane15.setViewportView(provinsisup);
-
-        jScrollPane16.setViewportView(kodepossup);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -222,38 +315,37 @@ public class Supplier extends javax.swing.JFrame {
                                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                        .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                        .addComponent(jLabel11, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel8)
-                                    .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel11, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGap(19, 19, 19)
-                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(layout.createSequentialGroup()
                                         .addGap(18, 18, 18)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jScrollPane12, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jScrollPane13, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jScrollPane14, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jScrollPane15, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jScrollPane16, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 227, Short.MAX_VALUE)
+                                            .addComponent(kotasup)
+                                            .addComponent(negarasup)
+                                            .addComponent(telsup)
+                                            .addComponent(emailsup)
+                                            .addComponent(noreksup)
+                                            .addComponent(npwpsup)
+                                            .addComponent(faxsup)
+                                            .addComponent(provinsisup)
+                                            .addComponent(kodepossup)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(19, 19, 19)
+                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE))))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addContainerGap(219, Short.MAX_VALUE))))
+                        .addContainerGap(321, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -278,51 +370,50 @@ public class Supplier extends javax.swing.JFrame {
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(15, 15, 15)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel4)
-                                .addGap(9, 9, 9)
-                                .addComponent(jLabel5))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                        .addGap(12, 12, 12)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel4)
+                            .addComponent(kotasup, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel2)
                         .addGap(11, 11, 11)
                         .addComponent(jLabel3)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(6, 6, 6)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(negarasup, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane12, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(telsup, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane13, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane14, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane15, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane16, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(emailsup, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel8)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel8)
+                            .addComponent(noreksup, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel9)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel9)
+                            .addComponent(npwpsup, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel12)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel12)
+                            .addComponent(faxsup, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel10)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(provinsisup, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel10))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel11)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 67, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(kodepossup, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel11))
+                        .addGap(50, 50, 50)))
                 .addComponent(jScrollPane11, javax.swing.GroupLayout.PREFERRED_SIZE, 408, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
@@ -374,8 +465,8 @@ public class Supplier extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextPane alamatsup;
-    private javax.swing.JTextPane emailsup;
-    private javax.swing.JTextPane faxsup;
+    private javax.swing.JTextField emailsup;
+    private javax.swing.JTextField faxsup;
     private javax.swing.JTable itemtabel;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
@@ -395,25 +486,16 @@ public class Supplier extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane11;
-    private javax.swing.JScrollPane jScrollPane12;
-    private javax.swing.JScrollPane jScrollPane13;
-    private javax.swing.JScrollPane jScrollPane14;
-    private javax.swing.JScrollPane jScrollPane15;
-    private javax.swing.JScrollPane jScrollPane16;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JScrollPane jScrollPane5;
-    private javax.swing.JScrollPane jScrollPane6;
-    private javax.swing.JScrollPane jScrollPane7;
-    private javax.swing.JTextPane kodepossup;
+    private javax.swing.JTextField kodepossup;
     private javax.swing.JTextPane kodesup;
-    private javax.swing.JTextPane kotasup;
+    private javax.swing.JTextField kotasup;
     private javax.swing.JTextPane namasup;
-    private javax.swing.JTextPane negarasup;
-    private javax.swing.JTextPane noreksup;
-    private javax.swing.JTextPane nosup;
-    private javax.swing.JTextPane npwpsup;
-    private javax.swing.JTextPane provinsisup;
+    private javax.swing.JTextField negarasup;
+    private javax.swing.JTextField noreksup;
+    private javax.swing.JTextField npwpsup;
+    private javax.swing.JTextField provinsisup;
+    private javax.swing.JTextField telsup;
     // End of variables declaration//GEN-END:variables
 }
