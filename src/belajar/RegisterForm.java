@@ -22,30 +22,11 @@ public class RegisterForm extends javax.swing.JFrame {
 
     public RegisterForm() {
         initComponents();
-        setComboBox();
-    }
-
-    private void setComboBox() {
-        rolekar.removeAllItems();
-        rolekar.addItem("Role");
-        rolekar.setSelectedItem("Role");
-        sql = "SELECT * FROM role";
-        try (Connection connection = DB.connectdb(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
-            while (resultSet.next()) {
-                rolekar.addItem(resultSet.getString("role"));
-                roleMap.put(resultSet.getString("role"), resultSet.getInt("id"));
-
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.toString());
-        }
-
     }
 
     private void register() {
         String nama = namekar.getText();
         String id = idkar.getText();
-        Integer role = roleMap.get(rolekar.getSelectedItem().toString());
         char[] pw = pwkar.getPassword();
         String password = String.valueOf(pw);
 
@@ -53,7 +34,7 @@ public class RegisterForm extends javax.swing.JFrame {
         try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, id);
             preparedStatement.setString(2, nama);
-            preparedStatement.setInt(3, role);
+            preparedStatement.setInt(3, 2);
             preparedStatement.setString(4, password);
 
             int hasil = preparedStatement.executeUpdate();
@@ -90,8 +71,6 @@ public class RegisterForm extends javax.swing.JFrame {
         showpw = new javax.swing.JCheckBox();
         namekar = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        rolekar = new javax.swing.JComboBox<>();
         jLabel5 = new javax.swing.JLabel();
 
         jMenuItem1.setText("jMenuItem1");
@@ -122,10 +101,6 @@ public class RegisterForm extends javax.swing.JFrame {
 
         jLabel3.setText("Nama");
 
-        jLabel4.setText("Role");
-
-        rolekar.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
         jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
         jLabel5.setText("Registrasi");
 
@@ -138,16 +113,14 @@ public class RegisterForm extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(showpw)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pwkar, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(rolekar, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(pwkar, javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(idkar, javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(namekar, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 232, Short.MAX_VALUE)
-                        .addComponent(register))
-                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(register)))
                 .addGap(290, 290, 290))
         );
         layout.setVerticalGroup(
@@ -163,19 +136,15 @@ public class RegisterForm extends javax.swing.JFrame {
                 .addComponent(jLabel3)
                 .addGap(18, 18, 18)
                 .addComponent(namekar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel4)
-                .addGap(18, 18, 18)
-                .addComponent(rolekar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addGap(29, 29, 29)
                 .addComponent(jLabel2)
                 .addGap(18, 18, 18)
                 .addComponent(pwkar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addGap(28, 28, 28)
                 .addComponent(showpw)
                 .addGap(18, 18, 18)
                 .addComponent(register)
-                .addContainerGap(107, Short.MAX_VALUE))
+                .addContainerGap(160, Short.MAX_VALUE))
         );
 
         pack();
@@ -185,7 +154,6 @@ public class RegisterForm extends javax.swing.JFrame {
         // TODO add your handling code here:
         if (showpw.isSelected()) {
             pwkar.setEchoChar((char) 0);
-            System.out.println(roleMap.get(rolekar.getSelectedItem().toString()));
         } else {
             pwkar.setEchoChar('*');
         }
@@ -239,7 +207,6 @@ public class RegisterForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuItem jMenuItem1;
@@ -247,7 +214,6 @@ public class RegisterForm extends javax.swing.JFrame {
     private javax.swing.JTextField namekar;
     private javax.swing.JPasswordField pwkar;
     private javax.swing.JButton register;
-    private javax.swing.JComboBox<String> rolekar;
     private javax.swing.JCheckBox showpw;
     // End of variables declaration//GEN-END:variables
 }

@@ -49,17 +49,15 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="showpw" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel2" alignment="0" min="-2" pref="61" max="-2" attributes="0"/>
-                  <Component id="pwkar" alignment="0" min="-2" pref="99" max="-2" attributes="0"/>
                   <Component id="jLabel1" alignment="0" min="-2" pref="61" max="-2" attributes="0"/>
                   <Component id="jLabel3" alignment="0" min="-2" pref="61" max="-2" attributes="0"/>
-                  <Component id="jLabel4" alignment="0" min="-2" pref="37" max="-2" attributes="0"/>
+                  <Component id="jLabel5" min="-2" pref="247" max="-2" attributes="0"/>
                   <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                      <Component id="rolekar" alignment="0" max="32767" attributes="0"/>
+                      <Component id="pwkar" alignment="0" max="32767" attributes="0"/>
                       <Component id="idkar" alignment="0" max="32767" attributes="0"/>
                       <Component id="namekar" alignment="0" pref="232" max="32767" attributes="0"/>
                       <Component id="register" alignment="1" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jLabel5" min="-2" pref="247" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" pref="290" max="-2" attributes="0"/>
           </Group>
@@ -78,19 +76,15 @@
               <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Component id="namekar" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
-              <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
-              <Component id="rolekar" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="29" max="-2" attributes="0"/>
               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Component id="pwkar" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
               <Component id="showpw" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Component id="register" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="107" max="32767" attributes="0"/>
+              <EmptySpace pref="160" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -132,26 +126,6 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="Nama"/>
       </Properties>
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabel4">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Role"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JComboBox" name="rolekar">
-      <Properties>
-        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="4">
-            <StringItem index="0" value="Item 1"/>
-            <StringItem index="1" value="Item 2"/>
-            <StringItem index="2" value="Item 3"/>
-            <StringItem index="3" value="Item 4"/>
-          </StringArray>
-        </Property>
-      </Properties>
-      <AuxValues>
-        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
-      </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel5">
       <Properties>

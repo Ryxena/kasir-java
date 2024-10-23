@@ -4,6 +4,10 @@
  */
 package belajar;
 
+import java.awt.Point;
+import java.awt.Toolkit;
+import javax.swing.SwingUtilities;
+
 /**
  *
  * @author ASUS
@@ -15,8 +19,25 @@ public class AdminPanel extends javax.swing.JFrame {
      */
     public AdminPanel() {
         initComponents();
+        FullScreen();
     }
+    
+    private void FullScreen() {
+        getContentPane().setPreferredSize(Toolkit.getDefaultToolkit().getScreenSize());
+        pack();
+        setResizable(false);
 
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                Point p = new Point(0, 0);
+                SwingUtilities.convertPointToScreen(p, getContentPane());
+                Point l = getLocation();
+                l.x -= p.x;
+                l.y -= p.y;
+                setLocation(l);
+            }
+        });
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -31,8 +52,10 @@ public class AdminPanel extends javax.swing.JFrame {
         riwayatbutton = new javax.swing.JButton();
         logoutbutton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         barangbutton.setText("Data Barang");
         barangbutton.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -45,6 +68,7 @@ public class AdminPanel extends javax.swing.JFrame {
                 barangbuttonActionPerformed(evt);
             }
         });
+        getContentPane().add(barangbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(48, 243, 98, 41));
 
         petugasbutton.setText("Data petugas");
         petugasbutton.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -57,13 +81,15 @@ public class AdminPanel extends javax.swing.JFrame {
                 petugasbuttonActionPerformed(evt);
             }
         });
+        getContentPane().add(petugasbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(226, 243, -1, 41));
 
-        riwayatbutton.setText("riwayat");
+        riwayatbutton.setText("Riwayat");
         riwayatbutton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 riwayatbuttonActionPerformed(evt);
             }
         });
+        getContentPane().add(riwayatbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(413, 243, 98, 41));
 
         logoutbutton.setText("Logout");
         logoutbutton.addActionListener(new java.awt.event.ActionListener() {
@@ -71,44 +97,20 @@ public class AdminPanel extends javax.swing.JFrame {
                 logoutbuttonActionPerformed(evt);
             }
         });
+        getContentPane().add(logoutbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(579, 243, 98, 41));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 48)); // NOI18N
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("Admin Panel");
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(226, 117, 319, -1));
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(48, 48, 48)
-                .addComponent(barangbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 80, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 319, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(187, 187, 187))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(petugasbutton)
-                        .addGap(86, 86, 86)
-                        .addComponent(riwayatbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(logoutbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(55, 55, 55))))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap(117, Short.MAX_VALUE)
-                .addComponent(jLabel1)
-                .addGap(62, 62, 62)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(barangbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(petugasbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(riwayatbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(logoutbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(302, 302, 302))
-        );
+        jButton1.setText("Supplier");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 330, 110, 60));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -143,6 +145,12 @@ public class AdminPanel extends javax.swing.JFrame {
         dispose();
         DataPetugas.main(null);
     }//GEN-LAST:event_petugasbuttonMouseClicked
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        dispose();
+        Supplier.main(null);
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -182,6 +190,7 @@ public class AdminPanel extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton barangbutton;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JButton logoutbutton;
     private javax.swing.JButton petugasbutton;

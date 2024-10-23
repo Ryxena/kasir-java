@@ -4,13 +4,13 @@
  */
 package belajar;
 
+import java.awt.Point;
+import java.awt.Toolkit;
 import javax.swing.table.DefaultTableModel;
 import java.sql.*;
 import javax.swing.JOptionPane;
-import java.util.Map;
 import java.util.HashMap;
-import javax.swing.RowFilter;
-import javax.swing.table.TableRowSorter;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -24,142 +24,162 @@ public class Barang extends javax.swing.JFrame {
     Integer ID = null;
     String sql;
     HashMap<String, Integer> categoryMap = new HashMap<String, Integer>();
-//    private static DefaultTableModel tabelModel;
+
     public Barang() {
         initComponents();
+        FullScreen();
         setComboBox();
         showData(null);
     }
 
-        private void delete() {
-            if (ID != -1) {
-                String query = "DELETE FROM product WHERE ProductID = ?";
-                try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-                    preparedStatement.setInt(1, ID);
-                    int hasil = preparedStatement.executeUpdate();
+    private void FullScreen() {
+        getContentPane().setPreferredSize(Toolkit.getDefaultToolkit().getScreenSize());
+        pack();
+        setResizable(false);
 
-                    if (hasil > 0) {
-                        JOptionPane.showMessageDialog(null, "Baris dengan ID " + ID + " berhasil dihapus dari Database");
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Baris dengan ID " + ID + " tidak ditemukan dalam Database");
-                    }
-                    ID = -1;
-                } catch (SQLException e) {
-                    JOptionPane.showMessageDialog(null, e.toString());
-                }
-            } else {
-                JOptionPane.showMessageDialog(null, "Tidak ada baris yang dipilih untuk dihapus.");
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                Point p = new Point(0, 0);
+                SwingUtilities.convertPointToScreen(p, getContentPane());
+                Point l = getLocation();
+                l.x -= p.x;
+                l.y -= p.y;
+                setLocation(l);
             }
-        }
+        });
+    }
 
-
-        private void update() {
-            String productName = ItemName.getText();
-            int quantity = Integer.parseInt(ItemQuantity.getText());
-            double price = Double.parseDouble(ItemPrice.getText());
-            int categoryID = categoryMap.get(ItemCategory.getSelectedItem().toString());
-
-            sql = "UPDATE product SET ProductName = ?, Quantity = ?, Price = ?, CategoryID = ? WHERE ProductID = ?";
-
-            try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setString(1, productName);
-                preparedStatement.setInt(2, quantity);
-                preparedStatement.setDouble(3, price);
-                preparedStatement.setInt(4, categoryID);
-                preparedStatement.setInt(5, ID);
-
-                int rowsUpdated = preparedStatement.executeUpdate();
-                if (rowsUpdated > 0) {
-                    JOptionPane.showMessageDialog(null, "Data item berhasil ditambahkan");
-                }else {
-                    JOptionPane.showMessageDialog(null, "Gagal memperbarui item dengan ID " + ID + " di Database");
-                }
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(null, e.toString());
-            }
-        }
-
-        private void setComboBox() {
-            sql = "SELECT * FROM category";
-            ItemCategory.addItem("Category");
-            ItemCategory.setSelectedItem("Category");
-            try (Connection connection = DB.connectdb(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
-                while (resultSet.next()) {
-                    int categoryID = resultSet.getInt("CategoryID");
-                    String categoryName = resultSet.getString("CategoryName");
-                    ItemCategory.addItem(resultSet.getString("CategoryName"));
-                    categoryMap.put(categoryName, categoryID);
-                }
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(null, e.toString());
-            }
-        }
-
-        private void showData(String cari) {
-            sql = "SELECT p.ProductID, p.ProductName, p.Quantity, p.Price, c.CategoryName "
-                    + "FROM product p "
-                    + "INNER JOIN category c ON p.CategoryID = c.CategoryID ";
-
-            if (cari != null && !cari.isEmpty()) {
-                sql += "WHERE p.ProductName LIKE ? OR p.Quantity LIKE ? OR p.Price LIKE ? OR c.CategoryName LIKE ?";
-            }
-
-            String[] kolom = {"ID", "Nama", "Stock", "Harga", "Category"};
-            DefaultTableModel tabelModel = new DefaultTableModel(null, kolom);
-
-            try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                if (cari != null && !cari.isEmpty()) {
-                    String cariString = "%" + cari + "%";
-                    for (int i = 1; i <= 4; i++) {
-                        preparedStatement.setString(i, cariString);
-                    }
-                }
-
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String id = resultSet.getString("ProductID");
-                        String nama = resultSet.getString("ProductName");
-                        String quantity = resultSet.getString("Quantity");
-                        String price = resultSet.getString("Price");
-                        String category = resultSet.getString("CategoryName");
-                        Object[] baris = {id, nama, quantity, price, category};
-                        tabelModel.addRow(baris);
-                    }
-                }
-
-                itemtabel.setModel(tabelModel);
-
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(null, e.toString());
-            }
-        }
-
-        private void tambah() {
-            String nama = ItemName.getText();
-            Integer quantity = Integer.parseInt(ItemQuantity.getText());
-            Integer price = Integer.parseInt(ItemPrice.getText());
-            Integer categoryid = categoryMap.get(ItemCategory.getSelectedItem().toString());
-            sql = "INSERT INTO product (ProductName, Quantity, Price, CategoryID) VALUES (?, ?, ?, ?)";
-            try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setString(1, nama);
-                preparedStatement.setInt(2, quantity);
-                preparedStatement.setDouble(3, price);
-                preparedStatement.setInt(4, categoryid);
-
+    private void delete() {
+        if (ID != -1) {
+            String query = "DELETE FROM product WHERE ProductID = ?";
+            try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, ID);
                 int hasil = preparedStatement.executeUpdate();
+
                 if (hasil > 0) {
-                    JOptionPane.showMessageDialog(null, "Item Berhasil ditambahkan");
+                    JOptionPane.showMessageDialog(null, "Baris dengan ID " + ID + " berhasil dihapus dari Database");
                 } else {
-                    JOptionPane.showMessageDialog(null, "Gagal menambahkan item ke Database");
+                    JOptionPane.showMessageDialog(null, "Baris dengan ID " + ID + " tidak ditemukan dalam Database");
                 }
-                ItemName.setText("");
-                ItemQuantity.setText("");
-                ItemPrice.setText("");
-                ItemCategory.setSelectedItem("Category");
+                ID = -1;
             } catch (SQLException e) {
                 JOptionPane.showMessageDialog(null, e.toString());
             }
+        } else {
+            JOptionPane.showMessageDialog(null, "Tidak ada baris yang dipilih untuk dihapus.");
         }
+    }
+
+    private void update() {
+        String productName = ItemID.getText();
+        int quantity = Integer.parseInt(ItemQuantity.getText());
+        double price = Double.parseDouble(ItemPrice.getText());
+        int categoryID = categoryMap.get(ItemCategory.getSelectedItem().toString());
+
+        sql = "UPDATE product SET ProductName = ?, Quantity = ?, Price = ?, CategoryID = ? WHERE ProductID = ?";
+
+        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, productName);
+            preparedStatement.setInt(2, quantity);
+            preparedStatement.setDouble(3, price);
+            preparedStatement.setInt(4, categoryID);
+            preparedStatement.setInt(5, ID);
+
+            int rowsUpdated = preparedStatement.executeUpdate();
+            if (rowsUpdated > 0) {
+                JOptionPane.showMessageDialog(null, "Data item berhasil ditambahkan");
+            } else {
+                JOptionPane.showMessageDialog(null, "Gagal memperbarui item dengan ID " + ID + " di Database");
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+    }
+
+    private void setComboBox() {
+        sql = "SELECT * FROM category";
+        ItemCategory.addItem("Category");
+        ItemCategory.setSelectedItem("Category");
+        try (Connection connection = DB.connectdb(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
+            while (resultSet.next()) {
+                int categoryID = resultSet.getInt("CategoryID");
+                String categoryName = resultSet.getString("CategoryName");
+                ItemCategory.addItem(resultSet.getString("CategoryName"));
+                categoryMap.put(categoryName, categoryID);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+    }
+
+    private void showData(String cari) {
+        sql = "SELECT p.ProductID, p.ProductName, p.Quantity, p.Price, c.CategoryName "
+                + "FROM product p "
+                + "INNER JOIN category c ON p.CategoryID = c.CategoryID ";
+
+        if (cari != null && !cari.isEmpty()) {
+            sql += "WHERE p.ProductName LIKE ? OR p.Quantity LIKE ? OR p.Price LIKE ? OR c.CategoryName LIKE ?";
+        }
+
+        String[] kolom = {"ID", "Nama", "Stock", "Harga", "Category"};
+        DefaultTableModel tabelModel = new DefaultTableModel(null, kolom);
+
+        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            if (cari != null && !cari.isEmpty()) {
+                String cariString = "%" + cari + "%";
+                for (int i = 1; i <= 4; i++) {
+                    preparedStatement.setString(i, cariString);
+                }
+            }
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    String id = resultSet.getString("ProductID");
+                    String nama = resultSet.getString("ProductName");
+                    String quantity = resultSet.getString("Quantity");
+                    String price = resultSet.getString("Price");
+                    String category = resultSet.getString("CategoryName");
+                    Object[] baris = {id, nama, quantity, price, category};
+                    tabelModel.addRow(baris);
+                }
+            }
+
+            itemtabel.setModel(tabelModel);
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+    }
+
+    private void tambah() {
+        String nama = ItemName.getText();
+        Integer quantity = Integer.valueOf(ItemQuantity.getText());
+        Integer price = Integer.valueOf(ItemPrice.getText());
+        Integer id = Integer.valueOf(ItemID.getText());
+        Integer categoryid = categoryMap.get(ItemCategory.getSelectedItem().toString());
+        sql = "INSERT INTO product (ProductID, ProductName, Quantity, Price, CategoryID) VALUES (?, ?, ?, ?, ?)";
+        try (Connection connection = DB.connectdb(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, id);
+            preparedStatement.setString(2, nama);
+            preparedStatement.setInt(3, quantity);
+            preparedStatement.setDouble(4, price);
+            preparedStatement.setInt(5, categoryid);
+
+            int hasil = preparedStatement.executeUpdate();
+            if (hasil > 0) {
+                JOptionPane.showMessageDialog(null, "Item Berhasil ditambahkan");
+            } else {
+                JOptionPane.showMessageDialog(null, "Gagal menambahkan item ke Database");
+            }
+            ItemID.setText("");
+            ItemName.setText("");
+            ItemQuantity.setText("");
+            ItemPrice.setText("");
+            ItemCategory.setSelectedItem("Category");
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -174,7 +194,7 @@ public class Barang extends javax.swing.JFrame {
         itemtabel = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
         SearchBox = new javax.swing.JTextField();
-        ItemName = new javax.swing.JTextField();
+        ItemID = new javax.swing.JTextField();
         ItemQuantity = new javax.swing.JTextField();
         ItemPrice = new javax.swing.JTextField();
         ItemCategory = new javax.swing.JComboBox<>();
@@ -187,8 +207,11 @@ public class Barang extends javax.swing.JFrame {
         CreateButton = new javax.swing.JButton();
         UpdateButton = new javax.swing.JButton();
         DeleteButton = new javax.swing.JButton();
+        jLabel7 = new javax.swing.JLabel();
+        ItemName = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         itemtabel.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -229,8 +252,11 @@ public class Barang extends javax.swing.JFrame {
             itemtabel.getColumnModel().getColumn(4).setHeaderValue("null");
         }
 
+        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(359, 85, 829, 545));
+
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
         jLabel1.setText("Data Barang");
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(604, 0, 355, 80));
 
         SearchBox.setToolTipText("");
         SearchBox.setName(""); // NOI18N
@@ -239,8 +265,25 @@ public class Barang extends javax.swing.JFrame {
                 SearchBoxKeyTyped(evt);
             }
         });
+        getContentPane().add(SearchBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 117, 149, -1));
+
+        ItemID.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ItemIDActionPerformed(evt);
+            }
+        });
+        getContentPane().add(ItemID, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 191, 149, -1));
+        getContentPane().add(ItemQuantity, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 383, 95, -1));
+
+        ItemPrice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ItemPriceActionPerformed(evt);
+            }
+        });
+        getContentPane().add(ItemPrice, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 433, 95, -1));
 
         ItemCategory.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {}));
+        getContentPane().add(ItemCategory, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 321, 149, -1));
 
         ButtonBack.setText("<< Kembali");
         ButtonBack.addActionListener(new java.awt.event.ActionListener() {
@@ -248,16 +291,22 @@ public class Barang extends javax.swing.JFrame {
                 ButtonBackActionPerformed(evt);
             }
         });
+        getContentPane().add(ButtonBack, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 46, -1, -1));
 
         jLabel2.setText("Cari Disini");
+        getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 94, 68, -1));
 
-        jLabel3.setText("Nama Barang");
+        jLabel3.setText("ID Barang");
+        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 157, 86, -1));
 
         jLabel4.setText("Price");
+        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 411, 86, -1));
 
         jLabel5.setText("Quantity");
+        getContentPane().add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 361, 86, -1));
 
         jLabel6.setText("Category");
+        getContentPane().add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 293, 86, -1));
 
         CreateButton.setText("Create");
         CreateButton.addActionListener(new java.awt.event.ActionListener() {
@@ -265,6 +314,7 @@ public class Barang extends javax.swing.JFrame {
                 CreateButtonActionPerformed(evt);
             }
         });
+        getContentPane().add(CreateButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 490, -1, -1));
 
         UpdateButton.setText("Update");
         UpdateButton.addActionListener(new java.awt.event.ActionListener() {
@@ -272,6 +322,7 @@ public class Barang extends javax.swing.JFrame {
                 UpdateButtonActionPerformed(evt);
             }
         });
+        getContentPane().add(UpdateButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 531, -1, -1));
 
         DeleteButton.setText("Delete");
         DeleteButton.addActionListener(new java.awt.event.ActionListener() {
@@ -279,79 +330,11 @@ public class Barang extends javax.swing.JFrame {
                 DeleteButtonActionPerformed(evt);
             }
         });
+        getContentPane().add(DeleteButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 572, -1, -1));
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(26, 26, 26)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(UpdateButton)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(SearchBox)
-                                .addComponent(ItemName, javax.swing.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE)
-                                .addComponent(ItemQuantity, javax.swing.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE)
-                                .addComponent(ItemPrice, javax.swing.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE)
-                                .addComponent(ItemCategory, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addComponent(CreateButton)
-                            .addComponent(DeleteButton))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 36, Short.MAX_VALUE)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(ButtonBack)
-                            .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel1)
-                        .addGap(100, 100, 100))))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(ButtonBack)
-                        .addGap(41, 41, 41))
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(SearchBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(ItemName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(ItemQuantity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(ItemPrice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel6)
-                        .addGap(12, 12, 12)
-                        .addComponent(ItemCategory, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(48, 48, 48)
-                        .addComponent(CreateButton)
-                        .addGap(18, 18, 18)
-                        .addComponent(UpdateButton)
-                        .addGap(18, 18, 18)
-                        .addComponent(DeleteButton)))
-                .addGap(14, 14, 14))
-        );
+        jLabel7.setText("Nama Barang");
+        getContentPane().add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 231, 86, -1));
+        getContentPane().add(ItemName, new org.netbeans.lib.awtextra.AbsoluteConstraints(26, 253, 149, -1));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -371,7 +354,8 @@ public class Barang extends javax.swing.JFrame {
     private void itemtabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_itemtabelMouseClicked
         // TODO add your handling code here:
         int baris = itemtabel.getSelectedRow();
-        ID = Integer.parseInt(itemtabel.getModel().getValueAt(baris, 0).toString());
+        ID = Integer.valueOf(itemtabel.getModel().getValueAt(baris, 0).toString());
+        ItemID.setText(itemtabel.getModel().getValueAt(baris, 0).toString());
         ItemName.setText(itemtabel.getModel().getValueAt(baris, 1).toString());
         ItemQuantity.setText(itemtabel.getModel().getValueAt(baris, 2).toString());
         ItemPrice.setText(itemtabel.getModel().getValueAt(baris, 3).toString());
@@ -394,6 +378,14 @@ public class Barang extends javax.swing.JFrame {
         // TODO add your handling code here:
         showData(SearchBox.getText().trim());
     }//GEN-LAST:event_SearchBoxKeyTyped
+
+    private void ItemIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ItemIDActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_ItemIDActionPerformed
+
+    private void ItemPriceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ItemPriceActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_ItemPriceActionPerformed
 
     /**
      * @param args the command line arguments
@@ -443,6 +435,7 @@ public class Barang extends javax.swing.JFrame {
     private javax.swing.JButton CreateButton;
     private javax.swing.JButton DeleteButton;
     private javax.swing.JComboBox<String> ItemCategory;
+    private javax.swing.JTextField ItemID;
     private javax.swing.JTextField ItemName;
     private javax.swing.JTextField ItemPrice;
     private javax.swing.JTextField ItemQuantity;
@@ -455,6 +448,7 @@ public class Barang extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 }

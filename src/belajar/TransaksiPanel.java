@@ -8,6 +8,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.properties.TextAlignment;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
+import java.io.IOException;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
@@ -29,7 +40,6 @@ public class TransaksiPanel extends javax.swing.JFrame {
 
     public void setId(int id) {
         this.ID = id;
-        System.out.println("belajar.TransaksiPanel.setId()" + ID + id);
     }
 
     public void setTabel(int ids) {
@@ -79,6 +89,11 @@ public class TransaksiPanel extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jButton1.setText("PRINT");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         tbl.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -142,6 +157,72 @@ public class TransaksiPanel extends javax.swing.JFrame {
         // TODO add your handling code here:
         dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+            // Open file chooser dialog
+    JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setDialogTitle("Specify a file to save");
+    fileChooser.setFileFilter(new FileNameExtensionFilter("PDF Files", "pdf"));
+
+    int userSelection = fileChooser.showSaveDialog(null);
+
+    if (userSelection == JFileChooser.APPROVE_OPTION) {
+        File fileToSave = fileChooser.getSelectedFile();
+
+        // Ensure the file has a .pdf extension
+        String filePath = fileToSave.getAbsolutePath();
+        if (!filePath.endsWith(".pdf")) {
+            filePath += ".pdf";
+        }
+
+        try {
+            // Create a PdfWriter instance
+            PdfWriter writer = new PdfWriter(filePath);
+
+            // Create a PdfDocument instance
+            PdfDocument pdfDoc = new PdfDocument(writer);
+
+            // Create a Document instance
+            Document document = new Document(pdfDoc);
+
+            // Add content to the PDF
+            document.add(new Paragraph("Invoice")
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setFontSize(18));
+
+            // Create a table with column headers
+            Table table = new Table(3);
+            table.addHeaderCell("Nama");
+            table.addHeaderCell("Jumlah");
+            table.addHeaderCell("Harga");
+
+            // Populate table with data from the DefaultTableModel
+            DefaultTableModel model = (DefaultTableModel) tbl.getModel();
+            for (int i = 0; i < model.getRowCount(); i++) {
+                String nama = (String) model.getValueAt(i, 0);
+                int quantity = (Integer) model.getValueAt(i, 1);
+                int price = (Integer) model.getValueAt(i, 2);
+                
+                table.addCell(new Cell().add(new Paragraph(nama)));
+                table.addCell(new Cell().add(new Paragraph(String.valueOf(quantity))));
+                table.addCell(new Cell().add(new Paragraph(String.valueOf(price))));
+            }
+
+            document.add(table);
+            document.add(new Paragraph("Total Amount: " + ttl.getText()));
+
+            // Close the document
+            document.close();
+
+            JOptionPane.showMessageDialog(null, "PDF saved successfully!");
+
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Error saving PDF: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
